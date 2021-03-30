@@ -21,8 +21,8 @@ membranes of all sorts, such as porous anisotropic structures or highly branchin
 
 ## Acknowledgments
 
-This work has been made possible thanks to the support and trust of exceptional people, my supervisors,
-[Anthea Monod](https://sites.google.com/view/antheamonod/home) (1) and [Dominique Bonnet](https://www.crick.ac.uk/research/find-a-researcher/dominique-bonnet) (2), as well as [Antoniana Batsivari](https://www.researchgate.net/profile/Antoniana-Batsivari) (2) who showed the images of bone marrow vessels which inspired this work. Thank you!
+This work has been made possible thanks to the kind support of my supervisors,
+[Anthea Monod](https://sites.google.com/view/antheamonod/home) (1) and [Dominique Bonnet](https://www.crick.ac.uk/research/find-a-researcher/dominique-bonnet) (2), as well as [Antoniana Batsivari](https://www.researchgate.net/profile/Antoniana-Batsivari) (2) who showed the images of bone marrow vessels which inspired this work.
 
 (1) Department of Mathematics, Imperial College London \
 (2) Haematopoietic Stem Cell Laboratory, The Francis Crick Institute
@@ -51,8 +51,8 @@ This repository is organized as follows:
 The basic usage is to call ```from cvtub.generator import _generate_shape```, and wrap it\
 into a more handy function as done in Curvatubes.ipynb. You are now ready to go!
 
-**Each shape you create will be unique :)** Good luck for generating beautiful shapes! \
-If you obtain interesting shapes and want to show them to me, I will be delighted about it. 
+**Each shape you create will be unique :)** \
+If you obtain interesting shapes and want to show them to me, I will be delighted to know more about it.
 
 # Academic use
 
@@ -70,9 +70,9 @@ If you use this code in your research paper, **please cite**
 
 # License
 
-I am thinking about it... (but in the meantime, you can run and use the codes!)
+This code is licensed under the permissive [MIT License](https://en.wikipedia.org/wiki/MIT_License).
 
-# Bugs
+# Bugs and Feedback
 
-If you find any problem in this script, please contact me directly at a.song19@imperial.ac.uk.
+If you have remarks or find a bug in the code, please contact me directly at a.song19@imperial.ac.uk.
 
