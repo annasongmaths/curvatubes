@@ -18,75 +18,62 @@ Note: convention that u has shape (Z,X,Y)
 import torch
 dtype = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.FloatTensor
 
+# new syntax
+import torch.fft
+
 
 ''' 3D Gaussian blur '''
-
-def to_complex(x):
-    return torch.stack( (x, torch.zeros_like(x)), -1)
-
-def to_real(x):
-    return x[..., 0]
-
-def fft(x):
-    return torch.fft( to_complex(x), x.ndim )
-
-def ifft(fx):
-    return to_real( torch.ifft( fx, fx.ndim - 1 ) )
-
-def complex_mult(a, b):
-    return torch.stack( (a[...,0] * b[...,0] - a[...,1] * b[...,1],
-                         a[...,1] * b[...,0] + a[...,0] * b[...,1]), -1 )
-    
-def complex_div(a, b):
-    sqnorm = (b**2).sum(-1, keepdim=True)
-    return torch.stack( (a[...,0] * b[...,0] + a[...,1] * b[...,1], 
-                         a[...,1] * b[...,0] - a[...,0] * b[...,1]), -1 ) / sqnorm
 
 def separable_fourier_filter(N,sigma):
     'Returns the Fourier transform of a gaussian filter k of size sigma (vector of length 2N) '
     k = (torch.arange(-N, N).type(dtype) ** 2) / (2 * sigma**2)
     k = torch.cat( (k[N:], k[:N]) )  # Put 0 in the first cell ("fftshift")
-
     k = (- k).exp().view(1,1,-1)  # (1,1,N)
     k = k / k.sum()
-    fk = torch.rfft(k, 1, onesided=False)  # 1D Fourier Transform, (1,1,(2*N)/2+1,2)
-    return fk
+    
+    fk_c = torch.fft.fft(k, dim = -1) # (1,1,2*N) complex
+    return fk_c
 
 def gaussian_blur_3D_periodic(u, sigma):
     'Applies a Gaussian blur of size sigma on u, using Fourier transforms'
     if sigma == None :
         return u
     
+    # input u is real
     N = u.shape[-1]//2
-    fk = separable_fourier_filter(N, sigma)  # (1,1,1,N,2)
+    fk_c = separable_fourier_filter(N, sigma)  # (1,1,2*N) complex
+    
+    fu_c = torch.fft.fft(u, dim = -1) # 1D Fourier Transform, (N,N,2*N) complex
+    fu_c = fu_c * fk_c # (N,N,2*N) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(0,2,1) # (N,N,2*N) complex (with zero imag part)
+    
+    fu_c = torch.fft.fft(u_c, dim = -1) # 1D Fourier Transform, (N,N,2*N) complex
+    fu_c = fu_c * fk_c # (N,N,2*N) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(2,1,0) # (N,N,2*N) complex (with zero imag part)
+    
+    fu_c = torch.fft.fft(u_c, dim = -1) # 1D Fourier Transform, (N,N,2*N) complex
+    fu_c = fu_c * fk_c # (N,N,2*N) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(2,0,1) # (N,N,2*N) complex (with zero imag part)
+    
+    return u_c.real # output is real
 
-    fU = torch.rfft( u, 1, onesided=False)  # 1D Fourier Transform, (N,N,(2*N)/2+1,2)
-    fU = complex_mult(fU, fk)
-    U = torch.irfft(fU, 1, onesided=False).permute(0,2,1)
-    fU = torch.rfft( U, 1, onesided=False)  # 1D Fourier Transform, (N,N,N,(2*N)/2+1,2)
-    fU = complex_mult(fU, fk)
-    U = torch.irfft(fU, 1, onesided=False).permute(2,1,0)
-    fU = torch.rfft( U, 1, onesided=False)  # 1D Fourier Transform, (N,N,N,(2*N)/2+1,2)
-    fU = complex_mult(fU, fk)
-    U = torch.irfft(fU, 1, onesided=False).permute(2,0,1)
-
-    return U
-
-def general_gaussian_blur_3D_periodic(u, fk, fi, fj):
+def general_gaussian_blur_3D_periodic(u, fk_c, fi_c, fj_c):
     'Applies a separable convolution whose Fourier filters are (fk,fi,fj) on u, typically anisotropic Gaussian blur '
-    fU = torch.rfft( u, 1, onesided=False)  # 1D Fourier Transform, (Z,X,Y,2)
-    fU = complex_mult(fU, fj)
-    U = torch.irfft(fU, 1, onesided=False).permute(0,2,1) # (Z,Y,X)
-    
-    fU = torch.rfft( U, 1, onesided=False)  # 1D Fourier Transform, (Z,Y,X,2)
-    fU = complex_mult(fU, fi)
-    U = torch.irfft(fU, 1, onesided=False).permute(2,1,0) # (X,Y,Z)
-    
-    fU = torch.rfft( U, 1, onesided=False)  # 1D Fourier Transform, (X,Y,Z,2)
-    fU = complex_mult(fU, fk)
-    U = torch.irfft(fU, 1, onesided=False).permute(2,0,1) # (Z,X,Y)
 
-    return U
+    # input u is real
+    fu_c = torch.fft.fft(u, dim = -1) # 1D Fourier Transform, (Z,X,Y) complex
+    fu_c = fu_c * fj_c # (Z,X,Y) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(0,2,1) # (Z,X,Y) complex (with zero imag part)
+    
+    fu_c = torch.fft.fft(u_c, dim = -1) # 1D Fourier Transform, (Z,X,Y) complex
+    fu_c = fu_c * fi_c # (Z,X,Y) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(2,1,0) # (Z,X,Y) complex (with zero imag part)
+    
+    fu_c = torch.fft.fft(u_c, dim = -1) # 1D Fourier Transform, (Z,X,Y) complex
+    fu_c = fu_c * fk_c # (Z,X,Y) complex
+    u_c = torch.fft.ifft(fu_c, dim = -1).permute(2,0,1) # (Z,X,Y) complex (with zero imag part)
+    
+    return u_c.real # output is real
 
 class GeneralGaussianBlur3D_periodic(torch.nn.Module):
     'Applies a Gaussian blur of sizes (sig_z,sig_x,sig_y) in PERIODIC mode'
@@ -98,16 +85,16 @@ class GeneralGaussianBlur3D_periodic(torch.nn.Module):
             self.trivial = True
         else :
             self.trivial = False
-            self.fk = separable_fourier_filter(Z//2, sig_z)  # (1,1,Z,2)
-            self.fi = separable_fourier_filter(X//2, sig_x)  # (1,1,X,2)
-            self.fj = separable_fourier_filter(Y//2, sig_y)  # (1,1,Y,2)
+            self.fk_c = separable_fourier_filter(Z//2, sig_z)  # (1,1,Z) complex
+            self.fi_c = separable_fourier_filter(X//2, sig_x)  # (1,1,X) complex
+            self.fj_c = separable_fourier_filter(Y//2, sig_y)  # (1,1,Y) complex
         
     def forward(self, u):
 
         if self.trivial :
             return u
         
-        return general_gaussian_blur_3D_periodic(u, self.fk, self.fi, self.fj)
+        return general_gaussian_blur_3D_periodic(u, self.fk_c, self.fi_c, self.fj_c) # (Z,X,Y) real
 
     
 class GeneralGaussianBlur3D_notperiodic(torch.nn.Module):
@@ -129,9 +116,9 @@ class GeneralGaussianBlur3D_notperiodic(torch.nn.Module):
             self.pad_y = int(3 * sig_y)
             self.padding_mode = padding_mode
 
-            self.fk_pad = separable_fourier_filter((Z + 2 * self.pad_z)//2, sig_z)  # (1,1,Z + 2 pad_z,2) ?
-            self.fi_pad = separable_fourier_filter((X + 2 * self.pad_x)//2, sig_x)  # (1,1,X + 2 pad_x,2) ?
-            self.fj_pad = separable_fourier_filter((Y + 2 * self.pad_y)//2, sig_y)  # (1,1,Y + 2 pad_y,2) ?
+            self.fk_pad_c = separable_fourier_filter((Z + 2 * self.pad_z)//2, sig_z)  # (1,1,Z + 2 pad_z) ? complex
+            self.fi_pad_c = separable_fourier_filter((X + 2 * self.pad_x)//2, sig_x)  # (1,1,X + 2 pad_x) ? complex
+            self.fj_pad_c = separable_fourier_filter((Y + 2 * self.pad_y)//2, sig_y)  # (1,1,Y + 2 pad_y) ? complex
             
         else :
             self.trivial = True
@@ -146,7 +133,7 @@ class GeneralGaussianBlur3D_notperiodic(torch.nn.Module):
                                          self.pad_x,self.pad_z,self.pad_z), 
                                         mode = self.padding_mode)[0,0]
 
-        u_pad = general_gaussian_blur_3D_periodic(u_pad, self.fk_pad, self.fi_pad, self.fj_pad)
+        u_pad = general_gaussian_blur_3D_periodic(u_pad, self.fk_pad_c, self.fi_pad_c, self.fj_pad_c)
         u = u_pad[self.pad_z:-self.pad_z, self.pad_x:-self.pad_x, self.pad_y:-self.pad_y]
         
         return u    

@@ -1,10 +1,10 @@
 # Curvatubes - a curvature model for the generation of tubes
 
-``Curvatubes`` is a Python code for generating tubular and membranous 3D shape textures.\
-The theoretical framework is described in the arxiv pre-print
-> [Generation of tubular and membranous shape textures with curvature functionals](https://arxiv.org/abs/2103.04856)
+``Curvatubes`` is a Python code for generating tubular, membranous and porous 3D shape textures.\
+The theoretical framework is described in the article (.bib citation below)
+> [Generation of Tubular and Membranous Shape Textures with Curvature Functionals](http://10.28.35.11:8090/lab?token=24c64737bb0ba185416b19dd32fa10b4d4aa59fdbb6c4d0e)
 > 
-> March 2021, Anna Song (Imperial College London and The Francis Crick Institute)
+> Published 19 August 2021, Anna Song (Imperial College London and The Francis Crick Institute)
 
 These shapes are modeled as optimizers of a curvature functional *F(S)* representing
 a curvature-based geometric energy of surfaces. This functional generalizes the
@@ -17,7 +17,14 @@ are addressed seamlessly. The implementation benefits from the automatic differe
 engine provided by PyTorch, combined to optimizers such as Adam and L-BFGS.
 
 ``Curvatubes`` leads to a wide continuum of shape textures, encompassing tubules and 
-membranes of all sorts, such as porous anisotropic structures or highly branching networks. 
+membranes of all sorts, such as porous anisotropic structures or highly branching networks. In particular, many more patterns than those presented in the publication can be generated.
+
+## Updates
+
+- 17/08/2022 : 
+    - fixed some compatibility issues with the latest version of `torch.fft` in `pytorch` (beyond 1.8). The first released version of `curvatubes` was compatible with `pytorch` up to version 1.7. See [how the old and new versions behave](https://github.com/pytorch/pytorch/wiki/The-torch.fft-module-in-PyTorch-1.7).
+    - fixed some compatibility issues with the latest version of `skimage.measure.marching_cubes`.
+    - also fixed some minor things
 
 ## Acknowledgments
 
@@ -56,15 +63,22 @@ If you obtain interesting shapes and want to show them to me, I will be delighte
 
 # Academic use
 
-If you use this code in your research paper, **please cite**
+If you use codes or ideas from this research paper, **please cite** it inside your work. Thank you !
 
 
 ```tex
-@article{song2021generation,
-  title={Generation of tubular and membranous shape textures with curvature functionals},
-  author={Song, Anna},
-  journal={arXiv preprint arXiv:2103.04856},
-  year={2021}
+@article{song_generation_2021,
+  author = {Anna Song},
+  title = {Generation of Tubular and Membranous Shape Textures with Curvature Functionals},
+  journal = {Journal of Mathematical Imaging and Vision},
+  year = {2021},
+  month = aug,
+  volume = {64},
+  number = {1},
+  pages = {17--40},
+  doi = {10.1007/s10851-021-01049-9},
+  url = {https://doi.org/10.1007/s10851-021-01049-9},
+  publisher = {Springer Science and Business Media {LLC}}
 }
 ```
 
@@ -75,4 +89,3 @@ This code is licensed under the permissive [MIT License](https://en.wikipedia.or
 # Bugs and Feedback
 
 If you have remarks or find a bug in the code, please contact me directly at a.song19@imperial.ac.uk.
-

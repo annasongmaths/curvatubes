@@ -175,21 +175,21 @@ def _generate_shape(v0, params, delta_x, xi, optim_method, optim_props,
     
     if not spatialized : # we write the values for constant parameters in the title
         def formatted(f): return format(f, '.3f').rstrip('0').rstrip('.')
-        aux_tuple = [a20, a11, a02, b10, b01, c]
-        aux_string = ' coeffs [{} {} {} {} {} {}]'
+        aux_tuple = [eps, a20, a11, a02, b10, b01, c]
+        aux_string = 'eps {} coeffs [{}, {}, {}, {}, {}, {}]'
         if M0 is not None : 
             aux_tuple += [M0]
             aux_string += ' m {}'
         str_tup = tuple([formatted(x) for x in aux_tuple])
-        title += aux_string.format(*str_tup)
+        title += '\n' + aux_string.format(*str_tup)
         
         if orientation :
-            title += ' mu {} theta {}'.format(mu, theta)
+            title += ' mu {} theta = {}'.format(mu, theta)
     else :
-        title += ' coeffs spatialized'
+        title += '\n' + 'coeffs spatialized'
             
     print(title)
-    print('dx = {:.3f} LZ = {:.2f} LX = {:.3f} LY = {:.3f} xi = {}'.format(delta_x,LZ,LX,LY,xi))
+    print('dx = {:.3f}, LZ = {:.2f}, LX = {:.3f}, LY = {:.3f}, xi = {}'.format(delta_x,LZ,LX,LY,xi))
     print(optim_props)
 
 

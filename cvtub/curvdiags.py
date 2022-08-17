@@ -74,7 +74,7 @@ def curvhist(vol, kap1_eps, kap2_eps, lev = 0, delta_x = 0.01,
     
     Z,X,Y = vol.shape
     print('Analysis for level set u = {}'.format(lev))
-    verts, faces, normals, values_mc = skimage.measure.marching_cubes_lewiner(vol, level = lev) #, allow_degenerate = False) 
+    verts, faces, normals, values_mc = skimage.measure.marching_cubes(vol, level = lev) #, allow_degenerate = False) 
 
     #compute cells areas
     As = verts[faces[:,0]]
